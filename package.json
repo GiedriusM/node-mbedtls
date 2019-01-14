@@ -1,0 +1,17 @@
+{
+  "name": "node-mbedtls",
+  "version": "0.0.0",
+  "description": "Node.js wrapper for mbedtls library",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mbedtls",
+    "DTLS",
+    "TLS"
+  ],
+  "gypfile": true,
+  "author": "Giedrius Medzevičius",
+  "license": "Apache-2.0"
+}
