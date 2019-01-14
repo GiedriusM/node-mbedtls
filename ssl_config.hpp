@@ -52,6 +52,9 @@ private:
             const unsigned char *psk_id, size_t len);
     static napi_value PskCallback(napi_env env, napi_callback_info info);
 
+    static napi_value CaChain(napi_env env, napi_callback_info info);
+    static napi_value OwnCert(napi_env env, napi_callback_info info);
+
     static napi_ref sConstructor;
 
     napi_env    mEnvironment;

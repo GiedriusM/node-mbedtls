@@ -7,7 +7,10 @@
           "mbedtls.cc",
           "ssl_constants.cpp",
           "ssl_config.cpp",
-          "ssl_context.cpp"
+          "ssl_context.cpp",
+          "x509_crt.cpp",
+          "x509_crl.cpp",
+          "pk_context.cpp"
       ],
       "libraries": [ 
           "./mbedtls/library/libmbedtls.a",

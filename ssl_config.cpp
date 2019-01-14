@@ -3,6 +3,9 @@
 #include <assert.h>
 #include <string.h>
 
+#include "x509_crt.hpp"
+#include "x509_crl.hpp"
+#include "pk_context.hpp"
 #include "mbedtls_utils.h"
 
 
@@ -39,7 +42,7 @@ napi_ref SslConfig::sConstructor;
 napi_value SslConfig::Init(napi_env env, napi_value exports)
 {
     napi_status status;
-    const uint32_t num_properties = 7;
+    const uint32_t num_properties = 9;
     napi_property_descriptor properties[num_properties] = {
         DECLARE_NAPI_METHOD("defaults", Defaults),
         DECLARE_NAPI_METHOD("authmode", Authmode),
@@ -48,6 +51,8 @@ napi_value SslConfig::Init(napi_env env, napi_value exports)
         DECLARE_NAPI_METHOD("dtls_cookies", DtlsCookies),
         DECLARE_NAPI_METHOD("psk", Psk),
         DECLARE_NAPI_METHOD("psk_cb", PskCallback),
+        DECLARE_NAPI_METHOD("ca_chain", CaChain),
+        DECLARE_NAPI_METHOD("own_cert", OwnCert),
     };
     napi_value cons;
 
@@ -750,6 +755,105 @@ napi_value SslConfig::PskCallback(napi_env env, napi_callback_info info)
 exit:
     // return
     status = napi_get_undefined(env, &jsret);
+    assert(status == napi_ok);
+
+    return jsret;
+}
+
+napi_value SslConfig::CaChain(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value jsthis;
+    size_t argc = 2;
+    napi_value args[argc];
+    SslConfig *self;
+    X509Crt *ca_chain;
+    X509Crl *ca_crl;
+
+    status = napi_get_cb_info(env, info, &argc, args, &jsthis, nullptr);
+    assert(status == napi_ok);
+
+    // get params: self (this), ca_chain, ca_crl
+    if (argc < 2)
+    {
+        status = napi_throw_type_error(env, nullptr, "Missing arguments");
+        assert(status == napi_ok);
+        return nullptr;
+    }
+
+    status = napi_unwrap(env, jsthis, reinterpret_cast<void**>(&self));
+    assert(status == napi_ok);
+
+    status = X509Crt::unwrap(env, args[0], &ca_chain);
+    if (status == napi_invalid_arg)
+    {
+        status = napi_throw_type_error(env, nullptr, "Expected mbedtls_x509_crt");
+        return nullptr;
+    }
+    assert(status == napi_ok);
+
+    status = X509Crl::unwrap(env, args[1], &ca_crl);
+    if (status == napi_invalid_arg)
+    {
+        status = napi_throw_type_error(env, nullptr, "Expected mbedtls_x509_crl");
+        return nullptr;
+    }
+    assert(status == napi_ok);
+
+    // call
+    mbedtls_ssl_conf_ca_chain(self, ca_chain, ca_crl);
+
+    // return
+    return nullptr;
+}
+
+napi_value SslConfig::OwnCert(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value jsthis;
+    size_t argc = 2;
+    napi_value args[argc];
+    napi_value jsret;
+    SslConfig *self;
+    X509Crt *own_cert;
+    PKContext *pk_key;
+    int ret;
+
+    status = napi_get_cb_info(env, info, &argc, args, &jsthis, nullptr);
+    assert(status == napi_ok);
+
+    // get params: self (this), own_cert, pk_key
+    if (argc < 2)
+    {
+        status = napi_throw_type_error(env, nullptr, "Missing arguments");
+        assert(status == napi_ok);
+        return nullptr;
+    }
+
+    status = napi_unwrap(env, jsthis, reinterpret_cast<void**>(&self));
+    assert(status == napi_ok);
+
+    status = X509Crt::unwrap(env, args[0], &own_cert);
+    if (status == napi_invalid_arg)
+    {
+        status = napi_throw_type_error(env, nullptr, "Expected mbedtls_x509_crt");
+        return nullptr;
+    }
+    assert(status == napi_ok);
+
+    status = PKContext::unwrap(env, args[1], &pk_key);
+    if (status == napi_invalid_arg)
+    {
+        status = napi_throw_type_error(env, nullptr, "Expected mbedtls_pk_context");
+        return nullptr;
+    }
+    assert(status == napi_ok);
+
+    // call
+    ret = mbedtls_ssl_conf_own_cert(self, own_cert, pk_key);
+
+    // return
+    status = napi_create_int32(env, ret, &jsret);
     assert(status == napi_ok);
 
     return jsret;
