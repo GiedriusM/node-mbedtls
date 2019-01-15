@@ -4,6 +4,7 @@
   "description": "Node.js wrapper for mbedtls library",
   "main": "index.js",
   "scripts": {
+    "preinstall": "git submodule update --init --recursive",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
