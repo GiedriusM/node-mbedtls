@@ -42,13 +42,14 @@ napi_ref SslConfig::sConstructor;
 napi_value SslConfig::Init(napi_env env, napi_value exports)
 {
     napi_status status;
-    const uint32_t num_properties = 9;
+    const uint32_t num_properties = 10;
     napi_property_descriptor properties[num_properties] = {
         DECLARE_NAPI_METHOD("defaults", Defaults),
         DECLARE_NAPI_METHOD("authmode", Authmode),
         DECLARE_NAPI_METHOD("rng", Rng),
         DECLARE_NAPI_METHOD("dbg", Dbg),
         DECLARE_NAPI_METHOD("dtls_cookies", DtlsCookies),
+        DECLARE_NAPI_METHOD("ciphersuites", Ciphersuites),
         DECLARE_NAPI_METHOD("psk", Psk),
         DECLARE_NAPI_METHOD("psk_cb", PskCallback),
         DECLARE_NAPI_METHOD("ca_chain", CaChain),
@@ -625,6 +626,73 @@ int SslConfig::PskCb(void *ctx, mbedtls_ssl_context *ssl,
     }
 
     return MBEDTLS_ERR_SSL_UNKNOWN_IDENTITY;
+}
+
+napi_value SslConfig::Ciphersuites(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value jsthis;
+    size_t argc = 1;
+    napi_value args[argc];
+    SslConfig* self;
+    bool is_array;
+    uint32_t length;
+    int *ciphersuites;
+
+    status = napi_get_cb_info(env, info, &argc, args, &jsthis, nullptr);
+    assert(status == napi_ok);
+
+    // get params: self (this), ciphersuites
+    if (argc < 1)
+    {
+        status = napi_throw_type_error(env, nullptr, "Missing arguments");
+        assert(status == napi_ok);
+        return nullptr;
+    }
+
+    status = napi_unwrap(env, jsthis, reinterpret_cast<void**>(&self));
+    assert(status == napi_ok);
+
+    status = napi_is_array(env, args[0], &is_array);
+    assert(status == napi_ok);
+
+    if (is_array)
+    {
+        status = napi_get_array_length(env, args[0], &length);
+        assert(status == napi_ok);
+
+        ciphersuites = new int[length + 1];
+
+        for (uint32_t i = 0; i < length; i++)
+        {
+            napi_value value;
+            status = napi_get_element(env, args[0], i, &value);
+            assert(status == napi_ok);
+            status = napi_get_value_int32(env, value, &ciphersuites[i]);
+            assert(status == napi_ok);
+        }
+
+        ciphersuites[length] = 0;
+    }
+    else
+    {
+        status = napi_throw_type_error(env, nullptr, "Array expected");
+        assert(status == napi_ok);
+        return nullptr;
+    }
+
+    // call
+    if (self->mCiphersuites != nullptr)
+    {
+        delete[] self->mCiphersuites;
+    }
+
+    self->mCiphersuites = ciphersuites;
+
+    mbedtls_ssl_conf_ciphersuites(self, self->mCiphersuites);
+
+    // return
+    return nullptr;
 }
 
 napi_value SslConfig::Psk(napi_env env, napi_callback_info info)

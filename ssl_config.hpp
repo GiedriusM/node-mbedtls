@@ -18,7 +18,8 @@ private:
         mDbgCallback(nullptr),
         mCookieWriteCallback(nullptr),
         mCookieCheckCallback(nullptr),
-        mPskCallback(nullptr)
+        mPskCallback(nullptr),
+        mCiphersuites(nullptr)
     {
         mbedtls_ssl_config_init(this);
     };
@@ -46,6 +47,8 @@ private:
             const unsigned char *info, size_t ilen);
     static napi_value DtlsCookies(napi_env env, napi_callback_info info);
 
+    static napi_value Ciphersuites(napi_env env, napi_callback_info info);
+
     static napi_value Psk(napi_env env, napi_callback_info info);
 
     static int PskCb(void *ctx, mbedtls_ssl_context *ssl,
@@ -63,6 +66,8 @@ private:
     napi_ref    mCookieWriteCallback;
     napi_ref    mCookieCheckCallback;
     napi_ref    mPskCallback;
+
+    int *       mCiphersuites;
 };
 
 #endif // SSL_CONFIG_HPP_
