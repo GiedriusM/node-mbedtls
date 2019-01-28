@@ -4,7 +4,7 @@ matrix:
   include:
     - os: linux
       node_js: "lts/*"
-      env: NODE_MBEDTLS_COVERAGE=1
+      env: GYP_DEFINES="NODE_MBEDTLS_COVERAGE=1"
     - os: linux
       node_js: "node"
     - os: windows
