@@ -1,15 +1,12 @@
-os:
-  - linux
-  - osx
-  - windows
-
 language: node_js
 
-node_js:
-  - "6"
-  - "8"
-  - "10"
-  - "11"
-  - "lts/*"
-  - "node"
-  - "iojs"
+matrix:
+  include:
+    - os: linux
+      node_js: 
+        - "lts"
+        - "node"
+    - os: osx
+      node_js: "lts"
+    - os: windows
+      node_js: "lts"
