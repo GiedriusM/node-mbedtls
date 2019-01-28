@@ -112,6 +112,9 @@
       "target_name": "mbedtls",
       "cflags": [ "-Wl,--no-undefined" ],
       "dependencies": [ "libmbedtls" ],
+      "variables": {
+        "NODE_MBEDTLS_COVERAGE%": "0"
+      },
       "conditions": [
         [ 'NODE_MBEDTLS_COVERAGE', {
             "cflags": [ "-fprofile-arcs", "-ftest-coverage" ],
