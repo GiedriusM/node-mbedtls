@@ -208,6 +208,8 @@ int SslContext::BioSendCb(void *ctx, const uint8_t *buf, size_t len)
 int SslContext::BioRecvCb(void *ctx, uint8_t *buf, size_t len)
 {
     assert(false);
+
+    return -1;
 }
 
 int SslContext::BioRecvTimeoutCb(void *ctx, uint8_t *buf, size_t len, uint32_t timeout)
@@ -510,7 +512,7 @@ napi_value SslContext::Read(napi_env env, napi_callback_info info)
     napi_status status;
     napi_value jsthis;
     size_t argc = 1;
-    napi_value args[argc];
+    napi_value args[1];
     napi_value jsret;
     SslContext *self;
     uint8_t *buffer;
@@ -542,7 +544,7 @@ napi_value SslContext::Write(napi_env env, napi_callback_info info)
     napi_status status;
     napi_value jsthis;
     size_t argc = 1;
-    napi_value args[argc];
+    napi_value args[1];
     napi_value jsret;
     SslContext *self;
     bool is_buf;
@@ -584,7 +586,7 @@ napi_value SslContext::SendAlertMessage(napi_env env, napi_callback_info info)
     napi_status status;
     napi_value jsthis;
     size_t argc = 2;
-    napi_value args[argc];
+    napi_value args[2];
     napi_value jsret;
     SslContext *self;
     int lvl, msg;

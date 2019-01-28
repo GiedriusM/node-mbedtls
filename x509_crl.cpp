@@ -108,7 +108,7 @@ napi_value X509Crl::Parse(napi_env env, napi_callback_info info)
     napi_status status;
     napi_value jsthis;
     size_t argc = 1;
-    napi_value args[argc];
+    napi_value args[1];
     napi_value jsret;
     X509Crl* self;
     bool is_buffer;

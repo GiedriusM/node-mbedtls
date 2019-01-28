@@ -108,7 +108,7 @@ napi_value PKContext::ParseKey(napi_env env, napi_callback_info info)
     napi_status status;
     napi_value jsthis;
     size_t argc = 2;
-    napi_value args[argc];
+    napi_value args[2];
     napi_value jsret;
     PKContext* self;
     bool is_buffer;

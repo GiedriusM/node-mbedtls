@@ -286,7 +286,7 @@ napi_value SslConfig::Rng(napi_env env, napi_callback_info info)
     napi_value jsthis;
     SslConfig* self;
     size_t argc = 1;
-    napi_value args[argc];
+    napi_value args[1];
     napi_valuetype type;
     napi_value jsret;
 
@@ -370,7 +370,7 @@ napi_value SslConfig::Dbg(napi_env env, napi_callback_info info)
     napi_value jsthis;
     SslConfig* self;
     size_t argc = 1;
-    napi_value args[argc];
+    napi_value args[1];
     napi_valuetype type;
     napi_value jsret;
 
@@ -424,7 +424,7 @@ int SslConfig::CookieWriteCb(void *ctx, unsigned char **p, unsigned char *end,
     napi_value global;
     napi_value func;
     napi_value jsret;
-    const int32_t max_cookie_len = end - *p;
+    const size_t max_cookie_len = end - *p;
     void *cookie;
     int ret;
 
@@ -453,12 +453,13 @@ int SslConfig::CookieWriteCb(void *ctx, unsigned char **p, unsigned char *end,
     status = napi_get_value_int32(self->mEnvironment, jsret, &ret);
     assert(status == napi_ok);
 
-    if (ret > max_cookie_len)
+    if (ret > 0)
     {
-        return MBEDTLS_ERR_SSL_BUFFER_TOO_SMALL;
-    }
-    else if (ret > 0)
-    {
+        if (static_cast<size_t>(ret) > max_cookie_len)
+        {
+            return MBEDTLS_ERR_SSL_BUFFER_TOO_SMALL;
+        }
+
         memcpy(*p, cookie, ret);
         *p += ret;
         ret = 0;
@@ -512,7 +513,7 @@ napi_value SslConfig::DtlsCookies(napi_env env, napi_callback_info info)
     napi_value jsthis;
     SslConfig* self;
     size_t argc = 2;
-    napi_value args[argc];
+    napi_value args[2];
     napi_valuetype type;
     napi_value jsret;
 
@@ -633,7 +634,7 @@ napi_value SslConfig::Ciphersuites(napi_env env, napi_callback_info info)
     napi_status status;
     napi_value jsthis;
     size_t argc = 1;
-    napi_value args[argc];
+    napi_value args[1];
     SslConfig* self;
     bool is_array;
     uint32_t length;
@@ -700,7 +701,7 @@ napi_value SslConfig::Psk(napi_env env, napi_callback_info info)
     napi_status status;
     napi_value jsthis;
     size_t argc = 2;
-    napi_value args[argc];
+    napi_value args[2];
     napi_value jsret;
     SslConfig* self;
     napi_valuetype type;
@@ -833,7 +834,7 @@ napi_value SslConfig::CaChain(napi_env env, napi_callback_info info)
     napi_status status;
     napi_value jsthis;
     size_t argc = 2;
-    napi_value args[argc];
+    napi_value args[2];
     SslConfig *self;
     X509Crt *ca_chain;
     X509Crl *ca_crl;
@@ -880,7 +881,7 @@ napi_value SslConfig::OwnCert(napi_env env, napi_callback_info info)
     napi_status status;
     napi_value jsthis;
     size_t argc = 2;
-    napi_value args[argc];
+    napi_value args[2];
     napi_value jsret;
     SslConfig *self;
     X509Crt *own_cert;
