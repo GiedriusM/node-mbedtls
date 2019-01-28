@@ -4,7 +4,7 @@
   "description": "Node.js wrapper for mbedtls library",
   "main": "index.js",
   "scripts": {
-    "test": "mocha test/tests.all.js"
+    "test": "istanbul cover node_modules/mocha/bin/_mocha test/tests.all.js && codecov"
   },
   "keywords": [
     "mbedtls",
@@ -16,6 +16,8 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "chai": "^4.2.0",
+    "codecov": "^3.1.0",
+    "istanbul": "^0.4.5",
     "mocha": "^5.2.0"
   }
 }
