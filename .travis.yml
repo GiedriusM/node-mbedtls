@@ -6,7 +6,5 @@ matrix:
       node_js: "lts/*"
     - os: linux
       node_js: "node"
-    - os: osx
-      node_js: "lts/*"
     - os: windows
       node_js: "lts/*"
