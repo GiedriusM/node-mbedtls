@@ -112,6 +112,13 @@
       "target_name": "mbedtls",
       "cflags": [ "-Wl,--no-undefined" ],
       "dependencies": [ "libmbedtls" ],
+      "conditions": [
+        [ 'NODE_MBEDTLS_COVERAGE', {
+            "cflags": [ "-fprofile-arcs", "-ftest-coverage" ],
+            "ldflags": [ "-fprofile-arcs", "-ftest-coverage" ],
+          },
+        ],
+      ],
       "sources": [
           "mbedtls.cc",
           "ssl_constants.cpp",

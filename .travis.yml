@@ -4,7 +4,11 @@ matrix:
   include:
     - os: linux
       node_js: "lts/*"
+      env: NODE_MBEDTLS_COVERAGE=1
     - os: linux
       node_js: "node"
     - os: windows
       node_js: "lts/*"
+
+after_success:
+    - bash <(curl -s https://codecov.io/bash)
