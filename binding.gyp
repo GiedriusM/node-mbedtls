@@ -113,7 +113,7 @@
       "cflags": [ "-Wl,--no-undefined" ],
       "dependencies": [ "libmbedtls" ],
       "conditions": [
-        [ '$(NODE_MBEDTLS_COVERAGE)', {
+        [ 'NODE_MBEDTLS_COVERAGE', {
             "cflags": [ "-fprofile-arcs", "-ftest-coverage" ],
             "ldflags": [ "-fprofile-arcs", "-ftest-coverage" ],
           },
