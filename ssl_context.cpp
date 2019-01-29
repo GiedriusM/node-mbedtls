@@ -165,17 +165,16 @@ napi_value SslContext::Setup(napi_env env, napi_callback_info info)
     assert(status == napi_ok);
 
     status = SslConfig::unwrap(env, args[0], &config);
-    assert(status == napi_ok);
-    if (config == nullptr)
+    if (status == napi_invalid_arg)
     {
-        status = napi_throw_type_error(env, nullptr, "parameter must be ssl_config");
-        goto exit;
+        status = napi_throw_type_error(env, nullptr, "Expected mbedtls_ssl_config");
+        return nullptr;
     }
+    assert(status == napi_ok);
 
     // call
     ret = mbedtls_ssl_setup(self, config);
 
-exit:
     // return
     status = napi_create_int32(env, ret, &jsret);
     assert(status == napi_ok);
@@ -281,83 +280,80 @@ napi_value SslContext::SetBio(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value jsthis;
-    size_t argc = 4;
-    napi_value args[4];
+    size_t argc = 3;
+    napi_value args[3];
     napi_valuetype type;
-    napi_value jsret;
     SslContext *self;
-    decltype(BioSendCb) *send_cb = nullptr;
-    decltype(BioRecvCb) *recv_cb = nullptr;
-    decltype(BioRecvTimeoutCb) *recv_timeout_cb = nullptr;
 
     status = napi_get_cb_info(env, info, &argc, args, &jsthis, nullptr);
     assert(status == napi_ok);
 
-    // get params: self (this), context, bio_send, bio_receive, bio_receive_timeout
+    // get params: self (this), bio_send, bio_receive, bio_receive_timeout
+    if (argc < 3)
+    {
+        status = napi_throw_type_error(env, nullptr, "Missing arguments");
+        return nullptr;
+    }
+
     status = napi_unwrap(env, jsthis, reinterpret_cast<void**>(&self));
     assert(status == napi_ok);
 
-    status = napi_typeof(env, args[1], &type);
+    status = napi_typeof(env, args[0], &type);
     assert(status == napi_ok);
-    if (type == napi_function)
+    if (type == napi_null)
     {
-        send_cb = BioSendCb;
+        args[0] = nullptr;
     }
-    else
+    else if (type != napi_function)
     {
         status = napi_throw_type_error(env, nullptr, "bio_send must be a function");
-        goto exit;
+        return nullptr;
+    }
+
+    status = napi_typeof(env, args[1], &type);
+    assert(status == napi_ok);
+    if (type == napi_null)
+    {
+        args[1] = nullptr;
+    }
+    else if (type != napi_function)
+    {
+        status = napi_throw_type_error(env, nullptr, "bio_recv must be a function");
+        return nullptr;
     }
 
     status = napi_typeof(env, args[2], &type);
     assert(status == napi_ok);
-    if (type == napi_function)
+    if (type == napi_null)
     {
-        recv_cb = BioRecvCb;
+        args[2] = nullptr;
     }
-    else if (type != napi_null)
-    {
-        status = napi_throw_type_error(env, nullptr, "bio_recv must be a function");
-        goto exit;
-    }
-
-    status = napi_typeof(env, args[3], &type);
-    assert(status == napi_ok);
-    if (type == napi_function)
-    {
-        recv_timeout_cb = BioRecvTimeoutCb;
-    }
-    else if (type != napi_null)
+    else if (type != napi_function)
     {
         status = napi_throw_type_error(env, nullptr, "bio_recv_timeout must be a function");
-        goto exit;
-    }
-
-    if (recv_cb == nullptr && recv_timeout_cb == nullptr)
-    {
-        status = napi_throw_type_error(env, nullptr, "bio_recv or bio_recv_timeout must be non-null");
-        goto exit;
+        return nullptr;
     }
 
     // call
-    status = rereference(env, self->mBioSendCallback, args[1]);
+    status = rereference(env, self->mBioSendCallback, args[0]);
     assert(status == napi_ok);
 
-    status = rereference(env, self->mBioRecvCallback, recv_cb ? args[2] : nullptr);
+    status = rereference(env, self->mBioRecvCallback, args[1]);
     assert(status == napi_ok);
 
-    status = rereference(env, self->mBioRecvTimeoutCallback,
-            recv_timeout_cb ? args[3] : nullptr);
+    status = rereference(env, self->mBioRecvTimeoutCallback, args[2]);
     assert(status == napi_ok);
 
-    mbedtls_ssl_set_bio(self, self, send_cb, recv_cb, recv_timeout_cb);
+    mbedtls_ssl_set_bio(
+            self,
+            self,
+            args[0] ? BioSendCb : nullptr,
+            args[1] ? BioRecvCb : nullptr,
+            args[2] ? BioRecvTimeoutCb : nullptr
+    );
 
-exit:
     // return
-    status = napi_get_undefined(env, &jsret);
-    assert(status == napi_ok);
-
-    return jsret;
+    return nullptr;
 }
 
 void SslContext::TimerSetCallback(void *ctx, uint32_t int_ms, uint32_t fin_ms)
@@ -427,50 +423,64 @@ napi_value SslContext::SetTimerCallback(napi_env env, napi_callback_info info)
 {
     napi_status status;
     napi_value jsthis;
-    size_t argc = 4;
-    napi_value args[4];
+    size_t argc = 2;
+    napi_value args[2];
     napi_valuetype type;
-    napi_value jsret;
     SslContext *self;
 
     status = napi_get_cb_info(env, info, &argc, args, &jsthis, nullptr);
     assert(status == napi_ok);
 
-    // get params: self (this), context, set_timer_cb, get_timer_cb
+    // get params: self (this), set_timer_cb, get_timer_cb
+    if (argc < 2)
+    {
+        status = napi_throw_type_error(env, nullptr, "Missing arguments");
+        return nullptr;
+    }
+
     status = napi_unwrap(env, jsthis, reinterpret_cast<void**>(&self));
     assert(status == napi_ok);
 
-    status = napi_typeof(env, args[1], &type);
+    status = napi_typeof(env, args[0], &type);
     assert(status == napi_ok);
-    if (type != napi_function)
+    if (type == napi_null)
+    {
+        args[0] = nullptr;
+    }
+    else if (type != napi_function)
     {
         status = napi_throw_type_error(env, nullptr, "set_timer must be a function");
-        goto exit;
+        return nullptr;
     }
 
-    status = napi_typeof(env, args[2], &type);
+    status = napi_typeof(env, args[1], &type);
     assert(status == napi_ok);
-    if (type != napi_function)
+    if (type == napi_null)
+    {
+        args[1] = nullptr;
+    }
+    else if (type != napi_function)
     {
         status = napi_throw_type_error(env, nullptr, "get_timer must be a function");
-        goto exit;
+        return nullptr;
     }
 
     // call
-    status = rereference(env, self->mTimerSetCallback, args[1]);
+    status = rereference(env, self->mTimerSetCallback, args[0]);
     assert(status == napi_ok);
 
-    status = rereference(env, self->mTimerGetCallback, args[2]);
+    status = rereference(env, self->mTimerGetCallback, args[1]);
     assert(status == napi_ok);
 
-    mbedtls_ssl_set_timer_cb(self, self, TimerSetCallback, TimerGetCallback);
+    mbedtls_ssl_set_timer_cb(
+            self,
+            self,
+            args[0] ? TimerSetCallback : nullptr,
+            args[1] ? TimerGetCallback : nullptr
+    );
 
-exit:
     // return
-    status = napi_get_undefined(env, &jsret);
-    assert(status == napi_ok);
-
-    return jsret;
+    return nullptr;
 }
 
 napi_value SslContext::SessionReset(napi_env env, napi_callback_info info)
@@ -531,6 +541,7 @@ napi_value SslContext::Read(napi_env env, napi_callback_info info)
     napi_value args[1];
     napi_value jsret;
     SslContext *self;
+    bool is_buf;
     uint8_t *buffer;
     size_t length;
     int ret;
@@ -538,9 +549,24 @@ napi_value SslContext::Read(napi_env env, napi_callback_info info)
     status = napi_get_cb_info(env, info, &argc, args, &jsthis, nullptr);
     assert(status == napi_ok);
 
-    // get params: self (this), buffer, length
+    // get params: self (this), buffer
+    if (argc < 1)
+    {
+        status = napi_throw_type_error(env, nullptr, "Missing arguments");
+        return nullptr;
+    }
+
     status = napi_unwrap(env, jsthis, reinterpret_cast<void**>(&self));
     assert(status == napi_ok);
+
+    status = napi_is_buffer(env, args[0], &is_buf);
+    assert(status == napi_ok);
+
+    if (!is_buf)
+    {
+        status = napi_throw_type_error(env, nullptr, "buffer must be a Buffer");
+        return nullptr;
+    }
 
     status = napi_get_buffer_info(env, args[0], reinterpret_cast<void **>(&buffer), &length);
     assert(status == napi_ok);
@@ -571,7 +597,13 @@ napi_value SslContext::Write(napi_env env, napi_callback_info info)
     status = napi_get_cb_info(env, info, &argc, args, &jsthis, nullptr);
     assert(status == napi_ok);
 
-    // get params: self (this), buffer, length
+    // get params: self (this), buffer
+    if (argc < 1)
+    {
+        status = napi_throw_type_error(env, nullptr, "Missing arguments");
+        return nullptr;
+    }
+
     status = napi_unwrap(env, jsthis, reinterpret_cast<void**>(&self));
     assert(status == napi_ok);
 
@@ -579,8 +611,7 @@ napi_value SslContext::Write(napi_env env, napi_callback_info info)
     assert(status == napi_ok);
     if (!is_buf)
     {
-        status = napi_throw_type_error(env, nullptr, "argument is not a buffer");
-        assert(status == napi_ok);
+        status = napi_throw_type_error(env, nullptr, "buffer must be a Buffer");
         return nullptr;
     }
 
@@ -612,7 +643,11 @@ napi_value SslContext::SendAlertMessage(napi_env env, napi_callback_info info)
     assert(status == napi_ok);
 
     // get params: self (this), level, message
-    assert(argc == 2);
+    if (argc < 2)
+    {
+        status = napi_throw_type_error(env, nullptr, "Missing arguments");
+        return nullptr;
+    }
 
     status = napi_unwrap(env, jsthis, reinterpret_cast<void**>(&self));
     assert(status == napi_ok);
