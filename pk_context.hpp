@@ -12,11 +12,8 @@ public:
     static napi_status unwrap(napi_env env, napi_value value, PKContext **crl);
 
 private:
-    explicit PKContext(napi_env env)
-    {
-        mbedtls_pk_init(this);
-    };
-    ~PKContext(void) { mbedtls_pk_free(this); };
+    explicit PKContext(napi_env env);
+    ~PKContext(void);
 
     static napi_value New(napi_env env, napi_callback_info info);
     static void Finalize(napi_env env, void *nativeObject, void *finalize_hint);

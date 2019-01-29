@@ -12,18 +12,8 @@ public:
     static napi_status unwrap(napi_env env, napi_value value, SslConfig **config);
 
 private:
-    explicit SslConfig(napi_env env):
-        mEnvironment(env),
-        mRngCallback(nullptr),
-        mDbgCallback(nullptr),
-        mCookieWriteCallback(nullptr),
-        mCookieCheckCallback(nullptr),
-        mPskCallback(nullptr),
-        mCiphersuites(nullptr)
-    {
-        mbedtls_ssl_config_init(this);
-    };
-    ~SslConfig(void) { mbedtls_ssl_config_free(this); };
+    explicit SslConfig(napi_env env);
+    ~SslConfig(void);
 
     static napi_value New(napi_env env, napi_callback_info info);
     static void Finalize(napi_env env, void *nativeObject, void *finalize_hint);

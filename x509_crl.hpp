@@ -12,11 +12,8 @@ public:
     static napi_status unwrap(napi_env env, napi_value value, X509Crl **crl);
 
 private:
-    explicit X509Crl(napi_env env)
-    {
-        mbedtls_x509_crl_init(this);
-    };
-    ~X509Crl(void) { mbedtls_x509_crl_free(this); };
+    explicit X509Crl(napi_env env);
+    ~X509Crl(void);
 
     static napi_value New(napi_env env, napi_callback_info info);
     static void Finalize(napi_env env, void *nativeObject, void *finalize_hint);

@@ -10,17 +10,8 @@ public:
     static napi_value Init(napi_env env, napi_value exports);
 
 private:
-    explicit SslContext(napi_env env):
-        mEnvironment(env),
-        mBioSendCallback(nullptr),
-        mBioRecvCallback(nullptr),
-        mBioRecvTimeoutCallback(nullptr),
-        mTimerSetCallback(nullptr),
-        mTimerGetCallback(nullptr)
-    {
-        mbedtls_ssl_init(this);
-    };
-    ~SslContext(void) { mbedtls_ssl_free(this); };
+    explicit SslContext(napi_env env);
+    ~SslContext(void);
 
     static napi_value New(napi_env env, napi_callback_info info);
     static void Finalize(napi_env env, void *nativeObject, void *finalize_hint);

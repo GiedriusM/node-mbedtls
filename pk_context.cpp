@@ -62,6 +62,16 @@ napi_status PKContext::unwrap(napi_env env, napi_value value, PKContext **pk)
     return status;
 }
 
+PKContext::PKContext(napi_env env)
+{
+    mbedtls_pk_init(this);
+}
+
+PKContext::~PKContext(void)
+{
+    mbedtls_pk_free(this);
+}
+
 napi_value PKContext::New(napi_env env, napi_callback_info info)
 {
     napi_status status;

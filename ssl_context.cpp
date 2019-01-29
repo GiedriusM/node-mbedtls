@@ -68,6 +68,22 @@ napi_value SslContext::Init(napi_env env, napi_value exports)
     return exports;
 }
 
+SslContext::SslContext(napi_env env):
+    mEnvironment(env),
+    mBioSendCallback(nullptr),
+    mBioRecvCallback(nullptr),
+    mBioRecvTimeoutCallback(nullptr),
+    mTimerSetCallback(nullptr),
+    mTimerGetCallback(nullptr)
+{
+    mbedtls_ssl_init(this);
+}
+
+SslContext::~SslContext(void)
+{
+    mbedtls_ssl_free(this);
+}
+
 napi_value SslContext::New(napi_env env, napi_callback_info info)
 {
     napi_status status;

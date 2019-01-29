@@ -62,6 +62,16 @@ napi_status X509Crl::unwrap(napi_env env, napi_value value, X509Crl **crl)
     return status;
 }
 
+X509Crl::X509Crl(napi_env env)
+{
+    mbedtls_x509_crl_init(this);
+}
+
+X509Crl::~X509Crl(void)
+{
+    mbedtls_x509_crl_free(this);
+}
+
 napi_value X509Crl::New(napi_env env, napi_callback_info info)
 {
     napi_status status;

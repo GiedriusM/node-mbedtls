@@ -94,6 +94,23 @@ napi_status SslConfig::unwrap(napi_env env, napi_value value, SslConfig **config
     return napi_ok;
 }
 
+SslConfig::SslConfig(napi_env env):
+    mEnvironment(env),
+    mRngCallback(nullptr),
+    mDbgCallback(nullptr),
+    mCookieWriteCallback(nullptr),
+    mCookieCheckCallback(nullptr),
+    mPskCallback(nullptr),
+    mCiphersuites(nullptr)
+{
+    mbedtls_ssl_config_init(this);
+}
+
+SslConfig::~SslConfig(void)
+{
+    mbedtls_ssl_config_free(this);
+}
+
 napi_value SslConfig::New(napi_env env, napi_callback_info info)
 {
     napi_status status;
