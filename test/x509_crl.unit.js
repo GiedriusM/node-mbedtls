@@ -9,7 +9,7 @@ function load_cert(f) {
   return Buffer.concat([buf, Buffer.from('\0')]);
 }
 
-const REVOKED_CRT = load_cert('revoked.crt');
+const CA_CRL = load_cert('ca.crl.pem');
 
 describe('X509Crl', () => {
 
@@ -22,7 +22,7 @@ describe('X509Crl', () => {
     it('should validate input parameters', () => {
       const crl = new mbedtls.X509Crl();
       // Valid parameters
-      expect(crl.parse(REVOKED_CRT)).to.equal(0);
+      expect(crl.parse(CA_CRL)).to.equal(0);
       // Invalid parameters
       expect(() => crl.parse()).to.throw(TypeError);
     });

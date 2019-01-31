@@ -9,7 +9,7 @@ function load_cert(f) {
   return Buffer.concat([buf, Buffer.from('\0')]);
 }
 
-const SERVER_CRT = load_cert('server.crt');
+const SERVER_CRT = load_cert('server.crt.pem');
 
 describe('X509Crt', () => {
 

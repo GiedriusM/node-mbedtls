@@ -9,7 +9,7 @@ function load_cert(f) {
   return Buffer.concat([buf, Buffer.from('\0')]);
 }
 
-const SERVER_KEY = load_cert('server.key');
+const SERVER_KEY = load_cert('server.key.pem');
 
 describe('PKContext', () => {
 
