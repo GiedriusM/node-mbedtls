@@ -122,6 +122,7 @@ napi_value PKContext::ParseKey(napi_env env, napi_callback_info info)
     napi_value jsret;
     PKContext* self;
     bool is_buffer;
+    napi_valuetype type;
     uint8_t *key, *pwd;
     size_t key_len, pwd_len;
     int ret;
@@ -155,9 +156,17 @@ napi_value PKContext::ParseKey(napi_env env, napi_callback_info info)
         return nullptr;
     }
 
+    status = napi_typeof(env, args[1], &type);
+    assert(status == napi_ok);
     status = napi_is_buffer(env, args[1], &is_buffer);
     assert(status == napi_ok);
-    if (is_buffer)
+    if (type == napi_null)
+    {
+        pwd = nullptr;
+        pwd_len = 0;
+
+    }
+    else if (is_buffer)
     {
         status = napi_get_buffer_info(env, args[1],
                 reinterpret_cast<void **>(&pwd), &pwd_len);
