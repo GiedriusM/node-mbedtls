@@ -3,8 +3,8 @@ const expect = require('chai').expect;
 
 describe('SSLContext', () => {
   it('should initialize without parameters', () => {
-    const ctx = new mbedtls.SSLContext();
-    expect(ctx).to.be.an('mbedtls_ssl_context');
+    expect(new mbedtls.SSLContext()).to.be.an('mbedtls_ssl_context');
+    expect(mbedtls.SSLContext()).to.be.an('mbedtls_ssl_context');
   });
 
   describe('state', () => {
@@ -36,6 +36,9 @@ describe('SSLContext', () => {
       expect(() => ctx.set_bio(null, null, null)).to.not.throw();
       // Invalid parameters
       expect(() => ctx.set_bio()).to.throw(TypeError);
+      expect(() => ctx.set_bio({}, null, null)).to.throw(TypeError);
+      expect(() => ctx.set_bio(null, {}, null)).to.throw(TypeError);
+      expect(() => ctx.set_bio(null, null, {})).to.throw(TypeError);
     });
   });
 
@@ -47,6 +50,8 @@ describe('SSLContext', () => {
       expect(() => ctx.set_timer_cb(null, null)).to.not.throw();
       // Invalid parameters
       expect(() => ctx.set_timer_cb()).to.throw(TypeError);
+      expect(() => ctx.set_timer_cb({}, null)).to.throw(TypeError);
+      expect(() => ctx.set_timer_cb(null, {})).to.throw(TypeError);
     });
   });
 
@@ -88,6 +93,7 @@ describe('SSLContext', () => {
       expect(ctx.write(buf)).to.be.a('number');
       // Invalid parameters
       expect(() => ctx.write()).to.throw(TypeError);
+      expect(() => ctx.write({})).to.throw(TypeError);
     });
   });
 

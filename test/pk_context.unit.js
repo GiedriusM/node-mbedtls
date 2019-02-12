@@ -7,8 +7,8 @@ const certs = require('./certificates');
 describe('PKContext', () => {
 
   it('should initialize without parameters', () => {
-    const pk = new mbedtls.PKContext();
-    expect(pk).to.be.an('mbedtls_pk_context');
+    expect(new mbedtls.PKContext()).to.be.an('mbedtls_pk_context');
+    expect(mbedtls.PKContext()).to.be.an('mbedtls_pk_context');
   });
 
   describe('parse_key function', () => {
@@ -19,6 +19,8 @@ describe('PKContext', () => {
       expect(new_pk().parse_key(certs.SERVER_KEY, null)).to.equal(0);
       // Invalid parameters
       expect(() => new_pk().parse_key()).to.throw(TypeError);
+      expect(() => new_pk().parse_key({}, null)).to.throw(TypeError);
+      expect(() => new_pk().parse_key(certs.SERVER_KEY, {})).to.throw(TypeError);
     });
   });
 });

@@ -7,8 +7,8 @@ const certs = require('./certificates');
 describe('X509Crt', () => {
 
   it('should initialize without parameters', () => {
-    const crt = new mbedtls.X509Crt();
-    expect(crt).to.be.an('mbedtls_x509_crt');
+    expect(new mbedtls.X509Crt()).to.be.an('mbedtls_x509_crt');
+    expect(mbedtls.X509Crt()).to.be.an('mbedtls_x509_crt');
   });
 
   describe('parse function', () => {
@@ -18,6 +18,7 @@ describe('X509Crt', () => {
       expect(crt.parse(certs.SERVER_CRT)).to.equal(0);
       // Invalid parameters
       expect(() => crt.parse()).to.throw(TypeError);
+      expect(() => crt.parse({})).to.throw(TypeError);
     });
   });
 });
