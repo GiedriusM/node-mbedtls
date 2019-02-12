@@ -70,6 +70,34 @@ describe('SSLConfig', () => {
     });
   });
 
+  describe('ca_chain function', () => {
+    it('should validate input parameters', () => {
+      const conf = new mbedtls.SSLConfig();
+      const crt = new mbedtls.X509Crt();
+      const crl = new mbedtls.X509Crl();
+      // Valid inputs
+      expect(() => conf.ca_chain(crt, crl)).to.not.throw();
+      expect(() => conf.ca_chain(crt, null)).to.not.throw();
+      expect(() => conf.ca_chain(null, null)).to.not.throw();
+      // Invalid inputs
+      expect(() => conf.ca_chain()).to.throw(TypeError);
+    });
+  });
+
+  describe('own_cert function', () => {
+    it('should validate input parameters', () => {
+      const conf = new mbedtls.SSLConfig();
+      const crt = new mbedtls.X509Crt();
+      const pk = new mbedtls.PKContext();
+      // Valid inputs
+      expect(() => conf.own_cert(crt, pk)).to.not.throw();
+      expect(() => conf.own_cert(crt, null)).to.not.throw();
+      expect(() => conf.own_cert(null, null)).to.not.throw();
+      // Invalid inputs
+      expect(() => conf.own_cert()).to.throw(TypeError);
+    });
+  });
+
   describe('psk function', () => {
     it('should validate input parameters', () => {
       const conf = new mbedtls.SSLConfig();
