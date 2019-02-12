@@ -5,6 +5,9 @@ language: node_js
 # https://github.com/travis-ci/travis-ci/issues/1147#issuecomment-441393807
 if: type != push OR branch = master OR branch =~ /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 
+before_script:
+  - (cd ./test/certificates && ./generate.sh)
+
 matrix:
   include:
     - os: linux
