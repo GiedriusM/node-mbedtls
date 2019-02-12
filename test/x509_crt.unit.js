@@ -1,15 +1,8 @@
 const mbedtls = require('../index.js');
 const expect = require('chai').expect;
-const path = require('path');
-const fs = require('fs');
 
+const certs = require('./certificates');
 
-function load_cert(f) {
-  const buf = fs.readFileSync(path.resolve(__dirname, 'certificates', f));
-  return Buffer.concat([buf, Buffer.from('\0')]);
-}
-
-const SERVER_CRT = load_cert('server.crt.pem');
 
 describe('X509Crt', () => {
 
@@ -22,7 +15,7 @@ describe('X509Crt', () => {
     it('should validate input parameters', () => {
       const crt = new mbedtls.X509Crt();
       // Valid parameters
-      expect(crt.parse(SERVER_CRT)).to.equal(0);
+      expect(crt.parse(certs.SERVER_CRT)).to.equal(0);
       // Invalid parameters
       expect(() => crt.parse()).to.throw(TypeError);
     });

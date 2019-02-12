@@ -1,15 +1,8 @@
 const mbedtls = require('../index.js');
 const expect = require('chai').expect;
-const path = require('path');
-const fs = require('fs');
 
+const certs = require('./certificates');
 
-function load_cert(f) {
-  const buf = fs.readFileSync(path.resolve(__dirname, 'certificates', f));
-  return Buffer.concat([buf, Buffer.from('\0')]);
-}
-
-const SERVER_KEY = load_cert('server.key.pem');
 
 describe('PKContext', () => {
 
@@ -22,8 +15,8 @@ describe('PKContext', () => {
     it('should validate input parameters', () => {
       const new_pk = () => new mbedtls.PKContext();
       // Valid parameters
-      expect(new_pk().parse_key(SERVER_KEY, Buffer.from(''))).to.equal(0);
-      expect(new_pk().parse_key(SERVER_KEY, null)).to.equal(0);
+      expect(new_pk().parse_key(certs.SERVER_KEY, Buffer.from(''))).to.equal(0);
+      expect(new_pk().parse_key(certs.SERVER_KEY, null)).to.equal(0);
       // Invalid parameters
       expect(() => new_pk().parse_key()).to.throw(TypeError);
     });
