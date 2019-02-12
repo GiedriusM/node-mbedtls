@@ -1,4 +1,4 @@
-const mbedtls = require('./build/Release/mbedtls');
+const mbedtls = require('./mbedtls.js');
 const { DtlsServer } = require('./server.js');
 const { DtlsClient } = require('./client.js');
 

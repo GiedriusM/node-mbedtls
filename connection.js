@@ -5,7 +5,7 @@ const dns = require('dns');
 const net = require('net');
 
 const EventEmitter = require('events').EventEmitter;
-const mbed = require('./build/Release/mbedtls');
+const mbed = require('./mbedtls.js');
 
 
 function status_in_progress(ret) {

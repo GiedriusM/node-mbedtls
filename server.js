@@ -1,6 +1,6 @@
 const dgram = require('dgram');
 const EventEmitter = require('events').EventEmitter;
-const mbed = require('./build/Release/mbedtls');
+const mbed = require('./mbedtls.js');
 const crypto = require('crypto');
 const DtlsConnection = require('./connection').DtlsConnection;
 
