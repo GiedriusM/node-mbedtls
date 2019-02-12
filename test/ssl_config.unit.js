@@ -4,8 +4,8 @@ const expect = require('chai').expect;
 describe('SSLConfig', () => {
 
   it('should initialize without parameters', () => {
-    const conf = new mbedtls.SSLConfig();
-    expect(conf).to.be.an('mbedtls_ssl_config');
+    expect(new mbedtls.SSLConfig()).to.be.an('mbedtls_ssl_config');
+    expect(mbedtls.SSLConfig()).to.be.an('mbedtls_ssl_config');
   });
 
   describe('authmode function', () => {
@@ -53,7 +53,8 @@ describe('SSLConfig', () => {
       expect(() => conf.dtls_cookies(null, null)).to.not.throw();
       // Invalid parameters
       expect(() => conf.dtls_cookies()).to.throw(TypeError);
-      expect(() => conf.dtls_cookies({})).to.throw(TypeError);
+      expect(() => conf.dtls_cookies({}, null)).to.throw(TypeError);
+      expect(() => conf.dtls_cookies(null, {})).to.throw(TypeError);
     });
   });
 
@@ -81,6 +82,8 @@ describe('SSLConfig', () => {
       expect(() => conf.ca_chain(null, null)).to.not.throw();
       // Invalid inputs
       expect(() => conf.ca_chain()).to.throw(TypeError);
+      expect(() => conf.ca_chain({}, null)).to.throw(TypeError);
+      expect(() => conf.ca_chain(null, {})).to.throw(TypeError);
     });
   });
 
@@ -95,6 +98,8 @@ describe('SSLConfig', () => {
       expect(() => conf.own_cert(null, null)).to.not.throw();
       // Invalid inputs
       expect(() => conf.own_cert()).to.throw(TypeError);
+      expect(() => conf.own_cert({}, null)).to.throw(TypeError);
+      expect(() => conf.own_cert(null, {})).to.throw(TypeError);
     });
   });
 
@@ -104,13 +109,11 @@ describe('SSLConfig', () => {
       // Valid inputs
       expect(() => conf.psk(Buffer.from('psk'), Buffer.from('psk_identity'))).to.not.throw();
       expect(() => conf.psk(Buffer.from([1, 2, 3]), Buffer.from([4, 5, 6]))).to.not.throw();
-      //expect(() => conf.psk('almost_password', 'somewhat_username')).to.not.throw();
       expect(() => conf.psk(null, null)).to.not.throw();
       // Invalid inputs
       expect(() => conf.psk()).to.throw(TypeError);
-      expect(() => conf.psk(Buffer.from('psk'))).to.throw(TypeError);
-      expect(() => conf.psk(undefined, Buffer.from('psk_identity'))).to.throw(TypeError);
-      expect(() => conf.psk(0, 0)).to.throw(TypeError);
+      expect(() => conf.psk({}, null)).to.throw(TypeError);
+      expect(() => conf.psk(null, {})).to.throw(TypeError);
     });
   });
 
@@ -136,10 +139,9 @@ describe('SSLConfig', () => {
       expect(conf.defaults(1, 1, 1)).to.equal(0);
       // Invalid inputs
       expect(() => conf.defaults()).to.throw(TypeError);
-      expect(() => conf.defaults({})).to.throw(TypeError);
-      expect(() => conf.defaults(0, 0)).to.throw(TypeError);
-      expect(() => conf.defaults(0, undefined, 0)).to.throw(TypeError);
-      expect(() => conf.defaults(undefined, 0, 0)).to.throw(TypeError);
+      expect(() => conf.defaults({}, 0, 0)).to.throw(TypeError);
+      expect(() => conf.defaults(0, {}, 0)).to.throw(TypeError);
+      expect(() => conf.defaults(0, 0, {})).to.throw(TypeError);
     });
   });
 
