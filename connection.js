@@ -25,16 +25,15 @@ class DtlsConnection extends EventEmitter {
     this.final_timer = undefined;
 
     /* Parse options, create default values if missing */
-    opts = opts || 'udp4';
-
-    this.socket = opts.socket;
-    if (!this.socket) {
-      this.socket = dgram.createSocket(opts);
-      this.socket.bind();
+    if (!opts) {
+      throw new TypeError('Invalid socket options');
     }
 
-    this.remotePort = undefined;
+    this.socket = opts.socket || dgram.createSocket(opts);
+
     this.remoteAddress = undefined;
+    this.remoteFamily = undefined;
+    this.remotePort = undefined;
 
     this.ssl_config = opts.ssl_config;
     if (!this.ssl_config) {
@@ -53,7 +52,6 @@ class DtlsConnection extends EventEmitter {
     this.ssl = new mbed.SSLContext();
     this.ssl.setup(this.ssl_config);
     this.ssl.set_bio(
-      0,
       (ctx, buf) => {
         if (this.remoteAddress === undefined) {
           return -0x6880; // MBEDTLS_ERR_SSL_WANT_WRITE
@@ -75,7 +73,6 @@ class DtlsConnection extends EventEmitter {
     );
 
     this.ssl.set_timer_cb(
-      0,
       (ctx, int_ms, fin_ms) => {
         if (this.interval_timer) {
           clearTimeout(this.interval_timer);
@@ -117,6 +114,8 @@ class DtlsConnection extends EventEmitter {
 
     this.ssl.session_reset();
 
+    this.socket.on('listening', () => this.emit('listening'));
+
     this.socket.on('message', (msg, rinfo) => {
       assert(rinfo.address === this.remoteAddress);
       assert(rinfo.port === this.remotePort);
@@ -138,8 +137,17 @@ class DtlsConnection extends EventEmitter {
     return this.socket.address(...args);
   }
 
+  bind(...args) {
+    return this.socket.bind(...args);
+  }
+
+  close(...args) {
+    // XXX: should close be called for external sockets?
+    this.socket.close(...args);
+  }
+
   connect(port, host) {
-    port = parseInt(port) || undefined;
+    port = Number(port) || undefined;
     host = host || 'localhost';
 
     assert(port);
@@ -151,20 +159,17 @@ class DtlsConnection extends EventEmitter {
       this.process();
     } else {
       this.remoteAddress = undefined;
-      this.lookup(host, (err, address) => {
+      this.lookup(host, (err, address, family) => {
         if (err) {
           this.emit('error', err);
         } else {
+          this.remoteAddress = address;
+          this.remoteFamily = family;
           this.remotePort = port;
-          this.remoteAddress = address || this.remoteAddress;
           this.process();
         }
       });
     }
-  }
-
-  close() {
-    this.socket.close(); // TODO: don't close if it was passed from outside
   }
 
   process() {
@@ -184,6 +189,7 @@ class DtlsConnection extends EventEmitter {
         if (ret > 0) {
           const rinfo = {
             address: this.remoteAddress,
+            family: this.remoteFamily,
             port: this.remotePort,
           };
           this.emit('message', buf.slice(0, ret), rinfo);
@@ -218,21 +224,35 @@ class DtlsConnection extends EventEmitter {
     }
   }
 
-  send(msg, offset, length, port, addr, callback) {
-    if (Array.isArray(msg)) {
-      throw new TypeError('Array msg parameter is not supported');
+  send(msg, offset, length, port, address, callback) {
+    msg = Buffer.from(msg, 'utf8');
+
+    // No offset and length - shift args by 2
+    if (isNaN(Number(length))) {
+      callback = port;
+      address = length;
+      port = offset;
+      length = msg.length;
+      offset = 0;
+    }
+
+    offset = Number(offset);
+    length = Number(length);
+
+    // No address
+    if (typeof(address) !== 'string') {
+      callback = address;
+      address = undefined;
     }
 
     if (!this.remoteAddress) {
-      this.connect(port, addr);
+      this.connect(port, address);
     }
 
     let send_msg = {
       buffer: msg,
       offset: offset,
       length: length,
-      port: port,
-      addr: addr,
       callback: callback
     };
     this.send_messages.unshift(send_msg);
