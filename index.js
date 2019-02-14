@@ -1,12 +1,16 @@
 const mbedtls = require('./mbedtls.js');
 const { DtlsServer } = require('./server.js');
-const { DtlsClient } = require('./client.js');
+const { DtlsConnection } = require('./connection.js');
 
 module.exports = mbedtls;
 
 module.exports.Server = DtlsServer;
-module.exports.Socket = DtlsClient;
+module.exports.Connection = DtlsConnection;
 
 module.exports.createServer = (opts, callback) => {
   return new DtlsServer(opts, callback);
+}
+
+module.exports.createConnection = (opts, callback) => {
+  return new DtlsConnection(opts, callback);
 }

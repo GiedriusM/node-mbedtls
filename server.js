@@ -76,7 +76,9 @@ class DtlsServer extends EventEmitter {
           };
 
           con = new DtlsConnection(opts);
-          con.connect(rinfo.port, rinfo.address);
+          con.remoteAddress = rinfo.address;
+          con.remoteFamily = rinfo.family;
+          con.remotePort = rinfo.port;
 
           this.backlog[id] = con;
 
@@ -112,18 +114,46 @@ class DtlsServer extends EventEmitter {
     return this.sock.bind(...args);
   }
 
-  send(msg, offset, length, port, addr, callback) {
-    if (Array.isArray(msg)) {
-      throw new TypeError('Array msg parameter is not supported');
+  close(...args) {
+    // XXX: do not close if sock was passed
+    return this.sock.close(...args);
+  }
+
+  send(msg, offset, length, port, address, callback) {
+    msg = Buffer.from(msg, 'utf8');
+
+    // No offset and length - shift args by 2
+    if (isNaN(Number(length))) {
+      callback = port;
+      address = length;
+      port = offset;
+      length = msg.length;
+      offset = 0;
     }
 
-    const id = get_connection_id({address: addr, port: port});
+    offset = Number(offset);
+    length = Number(length);
+
+    // No address
+    if (typeof(address) !== 'string') {
+      callback = address;
+      address = undefined;
+    }
+
+    const id = get_connection_id({address: address, port: port});
     let con = this.connections[id]; // backlog connections are not yet established
 
     if (con) {
-      con.send(msg, offset, length, port, addr, callback);
+      con.send(msg, offset, length, port, address, callback);
     } else {
-      callback("Connection not found");
+      const err = new Error(`connection ENOTFOUND ${address}`);
+      err.code = 'ENOTFOUND';
+
+      if (callback) {
+        callback(err);
+      } else {
+        this.emit('error', err);
+      }
     }
   }
 
