@@ -76,8 +76,9 @@ class DtlsServer extends EventEmitter {
           };
 
           con = new DtlsConnection(opts);
-          // XXX: There should be a better option
-          con.connect(rinfo.port, rinfo.address);
+          con.remoteAddress = rinfo.address;
+          con.remoteFamily = rinfo.family;
+          con.remotePort = rinfo.port;
 
           this.backlog[id] = con;
 
@@ -145,7 +146,14 @@ class DtlsServer extends EventEmitter {
     if (con) {
       con.send(msg, offset, length, port, address, callback);
     } else {
-      callback("Connection not found");
+      const err = new Error(`connection ENOTFOUND ${address}`);
+      err.code = 'ENOTFOUND';
+
+      if (callback) {
+        callback(err);
+      } else {
+        this.emit('error', err);
+      }
     }
   }
 

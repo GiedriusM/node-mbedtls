@@ -153,23 +153,19 @@ class DtlsConnection extends EventEmitter {
     assert(port);
     assert(typeof(port) === 'number');
 
-    if (net.isIP(host)) {
-      this.remotePort = port;
-      this.remoteAddress = host;
-      this.process();
-    } else {
-      this.remoteAddress = undefined;
-      this.lookup(host, (err, address, family) => {
-        if (err) {
-          this.emit('error', err);
-        } else {
-          this.remoteAddress = address;
-          this.remoteFamily = family;
-          this.remotePort = port;
-          this.process();
-        }
-      });
-    }
+    this.remoteAddress = undefined;
+    this.remoteFamily = undefined;
+    this.remotePort = undefined;
+    this.lookup(host, (err, address, family) => {
+      if (err) {
+        this.emit('error', err);
+      } else {
+        this.remoteAddress = address;
+        this.remoteFamily = family;
+        this.remotePort = port;
+        this.process();
+      }
+    });
   }
 
   process() {
