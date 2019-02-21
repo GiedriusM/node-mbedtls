@@ -4,6 +4,7 @@
   "description": "Node.js wrapper for mbedtls library",
   "main": "index.js",
   "scripts": {
+    "lint": "eslint *.js",
     "test": "istanbul cover node_modules/mocha/bin/_mocha test/tests.all.js"
   },
   "keywords": [
@@ -17,7 +18,13 @@
   "devDependencies": {
     "chai": "^4.2.0",
     "codecov": "^3.1.0",
+    "eslint": "^5.14.1",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.16.0",
     "istanbul": "^0.4.5",
     "mocha": "^5.2.0"
+  },
+  "dependencies": {
+    "bindings": "^1.4.0"
   }
 }
