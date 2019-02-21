@@ -1,0 +1,2 @@
+# Eslint fails on windows builds due to CRLF
+* text=auto eol=lf
