@@ -28,13 +28,13 @@ function getConnectionId(rinfo) {
   return hash.digest('hex').slice(0, 12);
 }
 
-function createCookie(cookie, info) {
+function createCookie(ctx, cookie, info) {
   // TODO: implement proper cookie mechanism with DoS protection
   return cookie.write('I like cookies');
 }
 
-function verifyCookie(cookie, info) {
-  return 0;
+function verifyCookie(ctx, cookie, info) {
+  return cookie.length > 0 ? 0 : -1;
 }
 
 class DtlsServer extends EventEmitter {
