@@ -7,10 +7,6 @@ module.exports = mbedtls;
 module.exports.Server = DtlsServer;
 module.exports.Connection = DtlsConnection;
 
-module.exports.createServer = (opts, callback) => {
-  return new DtlsServer(opts, callback);
-}
+module.exports.createServer = (opts, callback) => new DtlsServer(opts, callback);
 
-module.exports.createConnection = (opts, callback) => {
-  return new DtlsConnection(opts, callback);
-}
+module.exports.createConnection = (opts, callback) => new DtlsConnection(opts, callback);

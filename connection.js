@@ -2,16 +2,15 @@ const assert = require('assert');
 const crypto = require('crypto');
 const dgram = require('dgram');
 const dns = require('dns');
-const net = require('net');
 
-const EventEmitter = require('events').EventEmitter;
+const { EventEmitter } = require('events');
 const mbed = require('./mbedtls.js');
 
 
-function status_in_progress(ret) {
-  return  ret == -0x6900 || // MBEDTLS_ERR_SSL_WANT_READ
-          ret == -0x6880 || // MBEDTLS_ERR_SSL_WANT_WRITE
-          ret == -0x6500;   // MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS
+function isStatusInProgress(ret) {
+  return ret === -0x6900      // MBEDTLS_ERR_SSL_WANT_READ
+         || ret === -0x6880   // MBEDTLS_ERR_SSL_WANT_WRITE
+         || ret === -0x6500;  // MBEDTLS_ERR_SSL_ASYNC_IN_PROGRESS
 }
 
 class DtlsConnection extends EventEmitter {
@@ -73,7 +72,7 @@ class DtlsConnection extends EventEmitter {
     );
 
     this.ssl.set_timer_cb(
-      (ctx, int_ms, fin_ms) => {
+      (ctx, interval, finish) => {
         if (this.interval_timer) {
           clearTimeout(this.interval_timer);
           this.interval_timer = null;
@@ -83,32 +82,33 @@ class DtlsConnection extends EventEmitter {
           this.final_timer = undefined;
         }
 
-        if (fin_ms > 0) {
-          if (int_ms > 0) {
+        if (finish > 0) {
+          if (interval > 0) {
             this.interval_timer = setTimeout(() => {
               this.interval_timer = null;
-            }, int_ms);
+            }, interval);
           }
 
           this.final_timer = setTimeout(() => {
             this.final_timer = null;
             this.process();
-          }, fin_ms);
-
+          }, finish);
         } else {
           this.final_timer = undefined;
         }
       },
       (ctx) => {
+        let status = -1;
+
         if (this.final_timer && this.interval_timer) {
-          return 0;
+          status = 0;
         } else if (this.final_timer && this.interval_timer === null) {
-          return 1;
+          status = 1;
         } else if (this.final_timer === null && this.interval_timer === null) {
-          return 2;
-        } else if (this.final_timer === undefined && this.interval_timer === null) {
-          return -1;
+          status = 2;
         }
+
+        return status;
       }
     );
 
@@ -146,12 +146,14 @@ class DtlsConnection extends EventEmitter {
     this.socket.close(...args);
   }
 
-  connect(port, host) {
+  connect(...args /* port[, host] */) {
+    let [port, host] = args;
+
     port = Number(port) || undefined;
     host = host || 'localhost';
 
     assert(port);
-    assert(typeof(port) === 'number');
+    assert(typeof (port) === 'number');
 
     this.remoteAddress = undefined;
     this.remoteFamily = undefined;
@@ -171,10 +173,9 @@ class DtlsConnection extends EventEmitter {
   process() {
     const buf = Buffer.alloc(1024);
 
-    while (1) {
-      let ret = -1;
-
-      if (this.ssl.state != 16 /* MBEDTLS_SSL_HANDSHAKE_OVER */) {
+    let ret = -1;
+    do {
+      if (this.ssl.state !== 16 /* MBEDTLS_SSL_HANDSHAKE_OVER */) {
         ret = this.ssl.handshake();
         if (this.ssl.state === 16) {
           this.emit('handshake');
@@ -199,11 +200,9 @@ class DtlsConnection extends EventEmitter {
         }
       }
 
-      if (ret >= 0) {
-        continue;
-      } else if (status_in_progress(ret))  {
+      if (isStatusInProgress(ret)) {
         break;
-      } else {
+      } else if (ret < 0) {
         if (ret === -0x7880 || ret === -0x7780) {
           this.ssl.close_notify();
         } else if (ret === -0x6A80) {
@@ -214,17 +213,21 @@ class DtlsConnection extends EventEmitter {
 
         // TODO: this should not reset, but do close and cleanup
         this.ssl.session_reset();
-        //this.emit('error', ret);
+        // this.emit('error', ret);
         break;
       }
-    }
+    } while (ret >= 0);
   }
 
-  send(msg, offset, length, port, address, callback) {
-    msg = Buffer.from(msg, 'utf8');
+  send(...args /* msg[, offset, length], port[, address][, callback] */) {
+    let [msg, offset, length, port, address, callback] = args;
+
+    if (!(msg instanceof Buffer)) {
+      msg = Buffer.from(args[0], 'utf8');
+    }
 
     // No offset and length - shift args by 2
-    if (isNaN(Number(length))) {
+    if (Number.isNaN(Number(offset)) || Number.isNaN(Number(length))) {
       callback = port;
       address = length;
       port = offset;
@@ -236,7 +239,7 @@ class DtlsConnection extends EventEmitter {
     length = Number(length);
 
     // No address
-    if (typeof(address) !== 'string') {
+    if (typeof (address) !== 'string') {
       callback = address;
       address = undefined;
     }
@@ -245,13 +248,13 @@ class DtlsConnection extends EventEmitter {
       this.connect(port, address);
     }
 
-    let send_msg = {
+    const packet = {
       buffer: msg,
       offset: offset,
       length: length,
       callback: callback
     };
-    this.send_messages.unshift(send_msg);
+    this.send_messages.unshift(packet);
     this.process();
   }
 }

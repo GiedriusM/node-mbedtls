@@ -8,6 +8,10 @@ if: type != push OR branch = master OR branch =~ /^v\d+\.\d+(\.\d+)?(-\S*)?$/
 before_script:
   - (cd ./test/certificates && ./generate.sh)
 
+script:
+  - npm run lint
+  - npm test
+
 matrix:
   include:
     - os: linux

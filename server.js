@@ -1,8 +1,8 @@
-const dgram = require('dgram');
-const EventEmitter = require('events').EventEmitter;
-const mbed = require('./mbedtls.js');
 const crypto = require('crypto');
-const DtlsConnection = require('./connection').DtlsConnection;
+const dgram = require('dgram');
+const { EventEmitter } = require('events');
+const mbed = require('./mbedtls.js');
+const { DtlsConnection } = require('./connection');
 
 class VirtualSocket extends EventEmitter {
   constructor(sock) {
@@ -22,10 +22,19 @@ class VirtualSocket extends EventEmitter {
   }
 }
 
-function get_connection_id(rinfo) {
+function getConnectionId(rinfo) {
   const hash = crypto.createHash('sha256');
-  hash.update('[' + rinfo.address + ']:' + rinfo.port);
+  hash.update(`[${rinfo.address}]:${rinfo.port}`);
   return hash.digest('hex').slice(0, 12);
+}
+
+function createCookie(ctx, cookie, info) {
+  // TODO: implement proper cookie mechanism with DoS protection
+  return cookie.write('I like cookies');
+}
+
+function verifyCookie(ctx, cookie, info) {
+  return cookie.length > 0 ? 0 : -1;
 }
 
 class DtlsServer extends EventEmitter {
@@ -33,7 +42,7 @@ class DtlsServer extends EventEmitter {
     super();
 
     this.options = {
-      backlog: opts.backlog | 5,
+      backlog: opts.backlog || 5,
     };
 
     this.backlog = {};
@@ -46,23 +55,14 @@ class DtlsServer extends EventEmitter {
       crypto.randomFillSync(buf);
       return 0;
     });
-    this.ssl_config.dtls_cookies(
-      (ctx, cookie, info) => {
-        // TODO: implement proper cookie mechanism with DoS protection
-        return cookie.write("I like cookies");
-      },
-      (ctx, cookie, info) => {
-        return cookie.length > 0 ? 0 : -1;
-      },
-      0
-    );
+    this.ssl_config.dtls_cookies(createCookie, verifyCookie);
 
     this.sock = dgram.createSocket(opts, callback);
     this.sock.on('close', () => this.emit('close'));
-    this.sock.on('error', (err) => this.emit('error', err));
+    this.sock.on('error', err => this.emit('error', err));
     this.sock.on('listening', () => this.emit('listening'));
     this.sock.on('message', (msg, rinfo) => {
-      const id = get_connection_id(rinfo);
+      const id = getConnectionId(rinfo);
       let con = this.connections[id] || this.backlog[id];
 
       if (con === undefined) {
@@ -70,12 +70,12 @@ class DtlsServer extends EventEmitter {
           // Create new connection
           const vsock = new VirtualSocket(this.sock);
 
-          const opts = {
+          const conOpts = {
             ssl_config: this.ssl_config,
             socket: vsock,
           };
 
-          con = new DtlsConnection(opts);
+          con = new DtlsConnection(conOpts);
           con.remoteAddress = rinfo.address;
           con.remoteFamily = rinfo.family;
           con.remotePort = rinfo.port;
@@ -94,7 +94,6 @@ class DtlsServer extends EventEmitter {
               con.close();
             }
           });
-
         } else {
           this.emit('error', 'Dropping incoming connection. Backlog limit reached.');
         }
@@ -119,11 +118,15 @@ class DtlsServer extends EventEmitter {
     return this.sock.close(...args);
   }
 
-  send(msg, offset, length, port, address, callback) {
-    msg = Buffer.from(msg, 'utf8');
+  send(...args /* msg[, offset, length], port[, address][, callback] */) {
+    let [msg, offset, length, port, address, callback] = args;
+
+    if (!(msg instanceof Buffer)) {
+      msg = Buffer.from(args[0], 'utf8');
+    }
 
     // No offset and length - shift args by 2
-    if (isNaN(Number(length))) {
+    if (Number.isNaN(Number(offset)) || Number.isNaN(Number(length))) {
       callback = port;
       address = length;
       port = offset;
@@ -135,13 +138,13 @@ class DtlsServer extends EventEmitter {
     length = Number(length);
 
     // No address
-    if (typeof(address) !== 'string') {
+    if (typeof (address) !== 'string') {
       callback = address;
       address = undefined;
     }
 
-    const id = get_connection_id({address: address, port: port});
-    let con = this.connections[id]; // backlog connections are not yet established
+    const id = getConnectionId({ address: address, port: port });
+    const con = this.connections[id]; // backlog connections are not yet established
 
     if (con) {
       con.send(msg, offset, length, port, address, callback);
@@ -159,9 +162,7 @@ class DtlsServer extends EventEmitter {
 
   setPskCallback(callback) {
     if (callback) {
-      this.ssl_config.psk_cb((ctx, psk_id) => {
-        return callback(psk_id);
-      });
+      this.ssl_config.psk_cb((ctx, pskId) => callback(pskId));
     } else {
       this.ssl_config.psk_cb(null);
     }
