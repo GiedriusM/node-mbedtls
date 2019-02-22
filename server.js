@@ -51,7 +51,7 @@ class DtlsServer extends EventEmitter {
     this.ssl_config = new mbed.SSLConfig();
     this.ssl_config.defaults(1, 1, 0);
     this.ssl_config.authmode(2); // MBEDTLS_SSL_VERIFY_REQUIRED
-    this.ssl_config.rng((ctx, buf) => {
+    this.ssl_config.rng((buf) => {
       crypto.randomFillSync(buf);
       return 0;
     });
@@ -162,7 +162,7 @@ class DtlsServer extends EventEmitter {
 
   setPskCallback(callback) {
     if (callback) {
-      this.ssl_config.psk_cb((ctx, pskId) => callback(pskId));
+      this.ssl_config.psk_cb(callback);
     } else {
       this.ssl_config.psk_cb(null);
     }

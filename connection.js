@@ -39,7 +39,7 @@ class DtlsConnection extends EventEmitter {
       this.ssl_config = new mbed.SSLConfig();
       this.ssl_config.defaults(0, 1, 0);
       this.ssl_config.authmode(2);
-      this.ssl_config.rng((ctx, buf) => {
+      this.ssl_config.rng((buf) => {
         crypto.randomFillSync(buf);
         return 0;
       });
@@ -51,7 +51,7 @@ class DtlsConnection extends EventEmitter {
     this.ssl = new mbed.SSLContext();
     this.ssl.setup(this.ssl_config);
     this.ssl.set_bio(
-      (ctx, buf) => {
+      (buf) => {
         if (this.remoteAddress === undefined) {
           return -0x6880; // MBEDTLS_ERR_SSL_WANT_WRITE
         }
@@ -60,7 +60,7 @@ class DtlsConnection extends EventEmitter {
         return buf.length;
       },
       null,
-      (ctx, buf, timeout) => {
+      (buf, timeout) => {
         const msg = this.messages.pop();
 
         if (msg && msg.length <= buf.length) {
@@ -72,7 +72,7 @@ class DtlsConnection extends EventEmitter {
     );
 
     this.ssl.set_timer_cb(
-      (ctx, interval, finish) => {
+      (interval, finish) => {
         if (this.interval_timer) {
           clearTimeout(this.interval_timer);
           this.interval_timer = null;
@@ -97,7 +97,7 @@ class DtlsConnection extends EventEmitter {
           this.final_timer = undefined;
         }
       },
-      (ctx) => {
+      () => {
         let status = -1;
 
         if (this.final_timer && this.interval_timer) {

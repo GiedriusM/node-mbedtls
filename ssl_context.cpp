@@ -186,18 +186,15 @@ int SslContext::BioSendCb(void *ctx, const uint8_t *buf, size_t len)
 {
     napi_status status;
     SslContext *self = reinterpret_cast<SslContext *>(ctx);
-    const int argc = 2;
+    const int argc = 1;
     napi_value argv[argc];
     napi_value global;
     napi_value func;
     napi_value jsret;
     int ret;
 
-    // prepare args: context, buffer
-    status = napi_create_int32(self->mEnvironment, 0, &argv[0]);
-    assert(status == napi_ok);
-
-    status = napi_create_buffer_copy(self->mEnvironment, len, buf, nullptr, &argv[1]);
+    // prepare args: buffer
+    status = napi_create_buffer_copy(self->mEnvironment, len, buf, nullptr, &argv[0]);
     assert(status == napi_ok);
 
     // call function
@@ -231,7 +228,7 @@ int SslContext::BioRecvTimeoutCb(void *ctx, uint8_t *buf, size_t len, uint32_t t
 {
     napi_status status;
     SslContext *self = reinterpret_cast<SslContext *>(ctx);
-    const int argc = 3;
+    const int argc = 2;
     napi_value argv[argc];
     napi_value global;
     napi_value func;
@@ -239,14 +236,11 @@ int SslContext::BioRecvTimeoutCb(void *ctx, uint8_t *buf, size_t len, uint32_t t
     void *data;
     int ret;
 
-    // prepare args: context, buffer, timeout
-    status = napi_create_int32(self->mEnvironment, 0, &argv[0]);
+    // prepare args: buffer, timeout
+    status = napi_create_buffer(self->mEnvironment, len, &data, &argv[0]);
     assert(status == napi_ok);
 
-    status = napi_create_buffer(self->mEnvironment, len, &data, &argv[1]);
-    assert(status == napi_ok);
-
-    status = napi_create_int32(self->mEnvironment, timeout, &argv[2]);
+    status = napi_create_int32(self->mEnvironment, timeout, &argv[1]);
     assert(status == napi_ok);
 
     // call function
@@ -360,20 +354,17 @@ void SslContext::TimerSetCallback(void *ctx, uint32_t int_ms, uint32_t fin_ms)
 {
     napi_status status;
     SslContext *self = reinterpret_cast<SslContext *>(ctx);
-    const int argc = 3;
+    const int argc = 2;
     napi_value argv[argc];
     napi_value global;
     napi_value func;
     napi_value jsret;
 
-    // prepare args: context, int_ms, fin_ms
-    status = napi_create_int32(self->mEnvironment, 0, &argv[0]);
+    // prepare args: int_ms, fin_ms
+    status = napi_create_int32(self->mEnvironment, int_ms, &argv[0]);
     assert(status == napi_ok);
 
-    status = napi_create_int32(self->mEnvironment, int_ms, &argv[1]);
-    assert(status == napi_ok);
-
-    status = napi_create_int32(self->mEnvironment, fin_ms, &argv[2]);
+    status = napi_create_int32(self->mEnvironment, fin_ms, &argv[1]);
     assert(status == napi_ok);
 
     // call function
@@ -391,16 +382,10 @@ int SslContext::TimerGetCallback(void *ctx)
 {
     napi_status status;
     SslContext *self = reinterpret_cast<SslContext *>(ctx);
-    const int argc = 1;
-    napi_value argv[argc];
     napi_value global;
     napi_value func;
     napi_value jsret;
     int ret;
-
-    // prepare args: context
-    status = napi_create_int32(self->mEnvironment, 0, &argv[0]);
-    assert(status == napi_ok);
 
     // call function
     status = napi_get_global(self->mEnvironment, &global);
@@ -409,7 +394,7 @@ int SslContext::TimerGetCallback(void *ctx)
     status = napi_get_reference_value(self->mEnvironment, self->mTimerGetCallback, &func);
     assert(status == napi_ok);
 
-    status = napi_call_function(self->mEnvironment, global, func, argc, argv, &jsret);
+    status = napi_call_function(self->mEnvironment, global, func, 0, nullptr, &jsret);
     assert(status == napi_ok);
 
     // retrieve return value
