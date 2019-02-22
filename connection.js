@@ -211,9 +211,8 @@ class DtlsConnection extends EventEmitter {
           this.ssl.send_alert_message(2, 40);
         }
 
-        // TODO: this should not reset, but do close and cleanup
-        this.ssl.session_reset();
-        // this.emit('error', ret);
+        this.emit('error', ret);
+        this.close();
         break;
       }
     } while (ret >= 0);

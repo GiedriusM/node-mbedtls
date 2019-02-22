@@ -40,13 +40,14 @@ napi_ref SslContext::sConstructor;
 napi_value SslContext::Init(napi_env env, napi_value exports)
 {
     napi_status status;
-    const size_t num_properties = 10;
+    const size_t num_properties = 11;
     napi_property_descriptor properties[num_properties] = {
         DECLARE_NAPI_PROPERTY("state", GetState, nullptr),
         DECLARE_NAPI_METHOD("setup", Setup),
         DECLARE_NAPI_METHOD("set_bio", SetBio),
         DECLARE_NAPI_METHOD("set_timer_cb", SetTimerCallback),
         DECLARE_NAPI_METHOD("session_reset", SessionReset),
+        DECLARE_NAPI_METHOD("set_client_transport_id", SetClientId),
         DECLARE_NAPI_METHOD("handshake", Handshake),
         DECLARE_NAPI_METHOD("read", Read),
         DECLARE_NAPI_METHOD("write", Write),
@@ -485,6 +486,54 @@ napi_value SslContext::SessionReset(napi_env env, napi_callback_info info)
 
     // call
     ret = mbedtls_ssl_session_reset(self);
+
+    // return
+    status = napi_create_int32(env, ret, &jsret);
+    assert(status == napi_ok);
+
+    return jsret;
+}
+
+napi_value SslContext::SetClientId(napi_env env, napi_callback_info info)
+{
+    napi_status status;
+    napi_value jsthis;
+    size_t argc = 1;
+    napi_value args[1];
+    napi_value jsret;
+    SslContext *self;
+    bool is_buf;
+    uint8_t *buf;
+    size_t len;
+    int ret;
+
+    status = napi_get_cb_info(env, info, &argc, args, &jsthis, nullptr);
+    assert(status == napi_ok);
+
+    // get params: self (this), info
+    if (argc < 1)
+    {
+        status = napi_throw_type_error(env, nullptr, "Missing arguments");
+        return nullptr;
+    }
+
+    status = napi_unwrap(env, jsthis, reinterpret_cast<void**>(&self));
+    assert(status == napi_ok);
+
+    status = napi_is_buffer(env, args[0], &is_buf);
+    assert(status == napi_ok);
+
+    if (!is_buf)
+    {
+        status = napi_throw_type_error(env, nullptr, "info must be a Buffer");
+        return nullptr;
+    }
+
+    status = napi_get_buffer_info(env, args[0], reinterpret_cast<void **>(&buf), &len);
+    assert(status == napi_ok);
+
+    // call
+    ret = mbedtls_ssl_set_client_transport_id(self, buf, len);
 
     // return
     status = napi_create_int32(env, ret, &jsret);
