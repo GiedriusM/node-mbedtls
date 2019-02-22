@@ -60,30 +60,6 @@ napi_value SslCookie::Init(napi_env anEnv, napi_value anExport)
     return anExport;
 }
 
-napi_status SslCookie::unwrap(napi_env anEnv, napi_value aValue, SslCookie **aCookie)
-{
-    napi_status status;
-    napi_value constructor;
-    bool isCookie = false;
-
-    *aCookie = nullptr;
-
-    status = napi_get_reference_value(anEnv, sConstructor, &constructor);
-    assert(status == napi_ok);
-
-    status = napi_instanceof(anEnv, aValue, constructor, &isCookie);
-    assert(status == napi_ok);
-    if (!isCookie)
-    {
-        return napi_invalid_arg;
-    }
-
-    status = napi_unwrap(anEnv, aValue, reinterpret_cast<void **>(aCookie));
-    assert(status == napi_ok);
-
-    return napi_ok;
-}
-
 SslCookie::SslCookie(napi_env anEnv):
     mEnvironment(anEnv),
     mSetupRngCallback(nullptr)
