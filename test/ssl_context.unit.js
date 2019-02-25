@@ -65,6 +65,22 @@ describe('SSLContext', () => {
     });
   });
 
+  describe('set_client_transport_id function', () => {
+    it('should validate input parameters', () => {
+      const conf = new mbedtls.SSLConfig();
+      conf.defaults(mbedtls.SSL_IS_SERVER, mbedtls.SSL_TRANSPORT_DATAGRAM, 0);
+      const ctx = new mbedtls.SSLContext();
+      ctx.setup(conf); // Segfaults if config is not set
+      const info = Buffer.from('foobar');
+
+      // Valid parameters
+      expect(ctx.set_client_transport_id(info)).to.equal(0);
+      // Invalid parameters
+      expect(() => ctx.set_client_transport_id()).to.throw(TypeError);
+      expect(() => ctx.set_client_transport_id({})).to.throw(TypeError);
+    });
+  });
+
   describe('handshake function', () => {
     it('should validate input parameters', () => {
       const ctx = new mbedtls.SSLContext();

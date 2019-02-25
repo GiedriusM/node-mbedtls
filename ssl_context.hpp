@@ -30,6 +30,8 @@ private:
     static napi_value SetTimerCallback(napi_env env, napi_callback_info info);
     static napi_value SessionReset(napi_env env, napi_callback_info info);
 
+    static napi_value SetClientId(napi_env env, napi_callback_info info);
+
     static napi_value Handshake(napi_env env, napi_callback_info info);
     static napi_value Read(napi_env env, napi_callback_info info);
     static napi_value Write(napi_env env, napi_callback_info info);

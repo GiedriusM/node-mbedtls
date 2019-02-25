@@ -25,16 +25,7 @@ class VirtualSocket extends EventEmitter {
 function getConnectionId(rinfo) {
   const hash = crypto.createHash('sha256');
   hash.update(`[${rinfo.address}]:${rinfo.port}`);
-  return hash.digest('hex').slice(0, 12);
-}
-
-function createCookie(ctx, cookie, info) {
-  // TODO: implement proper cookie mechanism with DoS protection
-  return cookie.write('I like cookies');
-}
-
-function verifyCookie(ctx, cookie, info) {
-  return cookie.length > 0 ? 0 : -1;
+  return hash.digest('hex').slice(0, 32);
 }
 
 class DtlsServer extends EventEmitter {
@@ -48,14 +39,23 @@ class DtlsServer extends EventEmitter {
     this.backlog = {};
     this.connections = {};
 
-    this.ssl_config = new mbed.SSLConfig();
-    this.ssl_config.defaults(1, 1, 0);
-    this.ssl_config.authmode(2); // MBEDTLS_SSL_VERIFY_REQUIRED
-    this.ssl_config.rng((ctx, buf) => {
+    this.ssl_cookie = new mbed.SSLCookie();
+    this.ssl_cookie.setup((buf) => {
       crypto.randomFillSync(buf);
       return 0;
     });
-    this.ssl_config.dtls_cookies(createCookie, verifyCookie);
+
+    this.ssl_config = new mbed.SSLConfig();
+    this.ssl_config.defaults(1, 1, 0);
+    this.ssl_config.authmode(2); // MBEDTLS_SSL_VERIFY_REQUIRED
+    this.ssl_config.rng((buf) => {
+      crypto.randomFillSync(buf);
+      return 0;
+    });
+    this.ssl_config.dtls_cookies(
+      this.ssl_cookie.write.bind(this.ssl_cookie),
+      this.ssl_cookie.check.bind(this.ssl_cookie)
+    );
 
     this.sock = dgram.createSocket(opts, callback);
     this.sock.on('close', () => this.emit('close'));
@@ -76,6 +76,7 @@ class DtlsServer extends EventEmitter {
           };
 
           con = new DtlsConnection(conOpts);
+          con.ssl.set_client_transport_id(Buffer.from(id));
           con.remoteAddress = rinfo.address;
           con.remoteFamily = rinfo.family;
           con.remotePort = rinfo.port;
@@ -93,6 +94,15 @@ class DtlsServer extends EventEmitter {
             } else {
               con.close();
             }
+          });
+
+          con.on('error', (err) => {
+            con.close();
+          });
+
+          con.once('close', (err) => {
+            delete this.backlog[id];
+            delete this.connections[id];
           });
         } else {
           this.emit('error', 'Dropping incoming connection. Backlog limit reached.');
@@ -162,7 +172,7 @@ class DtlsServer extends EventEmitter {
 
   setPskCallback(callback) {
     if (callback) {
-      this.ssl_config.psk_cb((ctx, pskId) => callback(pskId));
+      this.ssl_config.psk_cb(callback);
     } else {
       this.ssl_config.psk_cb(null);
     }

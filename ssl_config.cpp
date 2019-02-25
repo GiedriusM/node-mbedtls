@@ -259,7 +259,7 @@ int SslConfig::RngCb(void *ctx, unsigned char *buf, size_t len)
 {
     napi_status status;
     SslConfig *self = reinterpret_cast<SslConfig *>(ctx);
-    const int argc = 3;
+    const int argc = 1;
     napi_value argv[argc];
     napi_value global;
     napi_value func;
@@ -267,14 +267,8 @@ int SslConfig::RngCb(void *ctx, unsigned char *buf, size_t len)
     void *data;
     int res;
 
-    // prepare args: context, buffer, length
-    status = napi_create_int32(self->mEnvironment, 0, &argv[0]);
-    assert(status == napi_ok);
-
-    status = napi_create_buffer(self->mEnvironment, len, &data, &argv[1]);
-    assert(status == napi_ok);
-
-    status = napi_create_int32(self->mEnvironment, len, &argv[2]);
+    // prepare args: buffer
+    status = napi_create_buffer(self->mEnvironment, len, &data, &argv[0]);
     assert(status == napi_ok);
 
     // call function
@@ -285,6 +279,7 @@ int SslConfig::RngCb(void *ctx, unsigned char *buf, size_t len)
     assert(status == napi_ok);
 
     memset(data, 0, len);
+
     status = napi_call_function(self->mEnvironment, global, func, argc, argv, &jsres);
     assert(status == napi_ok);
 
@@ -436,7 +431,7 @@ int SslConfig::CookieWriteCb(void *ctx, unsigned char **p, unsigned char *end,
 {
     napi_status status;
     SslConfig *self = reinterpret_cast<SslConfig *>(ctx);
-    const int argc = 3;
+    const int argc = 2;
     napi_value argv[argc];
     napi_value global;
     napi_value func;
@@ -445,14 +440,12 @@ int SslConfig::CookieWriteCb(void *ctx, unsigned char **p, unsigned char *end,
     void *cookie;
     int ret;
 
-    // prepare args: context, pbuf, info
-    status = napi_create_int32(self->mEnvironment, 0, &argv[0]);
+
+    // prepare args: cookie, info
+    status = napi_create_buffer(self->mEnvironment, max_cookie_len, &cookie, &argv[0]);
     assert(status == napi_ok);
 
-    status = napi_create_buffer(self->mEnvironment, max_cookie_len, &cookie, &argv[1]);
-    assert(status == napi_ok);
-
-    status = napi_create_buffer_copy(self->mEnvironment, ilen, info, nullptr, &argv[2]);
+    status = napi_create_buffer_copy(self->mEnvironment, ilen, info, nullptr, &argv[1]);
     assert(status == napi_ok);
 
     // call function
@@ -490,21 +483,18 @@ int SslConfig::CookieCheckCb(void *ctx, const unsigned char *cookie, size_t clen
 {
     napi_status status;
     SslConfig *self = reinterpret_cast<SslConfig *>(ctx);
-    const int argc = 3;
+    const int argc = 2;
     napi_value argv[argc];
     napi_value global;
     napi_value func;
     napi_value jsret;
     int ret;
 
-    // prepare args: context, pbuf, info
-    status = napi_create_int32(self->mEnvironment, 0, &argv[0]);
+    // prepare args: cookie, info
+    status = napi_create_buffer_copy(self->mEnvironment, clen, cookie, nullptr, &argv[0]);
     assert(status == napi_ok);
 
-    status = napi_create_buffer_copy(self->mEnvironment, clen, cookie, nullptr, &argv[1]);
-    assert(status == napi_ok);
-
-    status = napi_create_buffer_copy(self->mEnvironment, ilen, info, nullptr, &argv[2]);
+    status = napi_create_buffer_copy(self->mEnvironment, ilen, info, nullptr, &argv[1]);
     assert(status == napi_ok);
 
     // call function

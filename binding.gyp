@@ -127,6 +127,7 @@
           "ssl_constants.cpp",
           "ssl_config.cpp",
           "ssl_context.cpp",
+          "ssl_cookie.cpp",
           "x509_crt.cpp",
           "x509_crl.cpp",
           "pk_context.cpp"
